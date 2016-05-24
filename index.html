@@ -18,8 +18,6 @@ var ctx = canvas.getContext('2d');
 
 var SC;
 
-ctx.strokeStyle = '#FF9800';
-
 var cur_level_idx = 0;
 var cur_level = levels[cur_level_idx];
 
@@ -94,6 +92,7 @@ function checkFinished() {
   alert('finished');
   cur_level_idx++;
   cur_level = levels[cur_level_idx];
+  onResize()
 }
 
 function isThere(x, y, dir) {
