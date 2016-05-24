@@ -1,0 +1,170 @@
+<html>
+<body>
+
+<canvas />
+<style type="text/css">
+  body, html {
+    margin: 0;
+    padding: 0;
+    background-color: #8AAFFF;
+    width: 100%;
+    text-align: center;
+  }
+</style>
+<script type="text/javascript" src="levels.js"></script>
+<script type="text/javascript">
+var canvas = document.getElementsByTagName('canvas')[0]
+var ctx = canvas.getContext('2d');
+
+var SC;
+
+
+
+
+ctx.strokeStyle = '#FF9800';
+
+var cur_level_idx = 4;
+var cur_level = levels[cur_level_idx];
+
+function onResize() {
+  var numEl = Math.max(cur_level.width, cur_level.height) + 1;
+
+  SC = Math.min(window.innerWidth, window.innerHeight) / numEl;
+
+  canvas.width = SC * numEl;
+  canvas.height = SC * numEl;
+  ctx.lineWidth = SC / 20;
+}
+onResize();
+window.onresize = onResize;
+
+(function draw() {
+  ctx.clearRect(0,0, canvas.width, canvas.height);
+
+  requestAnimationFrame(draw);
+
+  var tiles = cur_level.tiles;
+  ctx.save();
+  ctx.translate(SC / 2, SC / 2);
+  for (var i = 0; i < tiles.length; i++) {
+    for (var j = 0; j < tiles[i].length; j++) {
+      var tile = tiles[i][j];
+      // rotation animation
+      var sum = 0;
+      for (var k = 0; k < 4; k++) { sum += tile[k]; }
+
+      for (var k = 0; k < 4; k++) {
+        if (tile[5]) {
+          tile[4] += 0.03;
+          tile[4] = tile[4] % 4;
+          if (Math.abs(tile[5] - tile[4])%4 < 0.04) {
+            tile[4] = tile[5] % 4;
+            tile[5] = tile[4];
+            setTimeout(checkFinished, SC);
+          }
+        }
+        // curved shapes
+        if (tile[k] == 1 && tile[Math.floor((k + 4 + 1) % 4)] == 1) {
+          drawShape(2, Math.PI / 2 * (k + 1 + tile[4]));
+        }
+        // lines
+        if (sum == 2 && tile[k] == 1 && tile[Math.floor((k + 4 + 2) % 4)] == 1) {
+          drawShape(1, Math.PI / 2 * (k + 1 + tile[4]));
+        }
+        if (sum == 1 && tile[k] == 1) {
+          drawShape(4, Math.PI / 2 * (k + 1 + tile[4]));
+        }
+      }
+      ctx.translate(SC, 0);
+    }
+    ctx.translate(-SC * tiles[i].length -0, SC);
+  }
+  ctx.restore();
+})();
+
+function checkFinished() {
+  var tiles = cur_level.tiles;
+  for (var i = 0; i < tiles.length; i++) {
+    for (var j = 0; j < tiles[i].length; j++) {
+      var tile = tiles[i][j];
+      for (var k = 0; k < 4; k++) {
+        if (tile[k] == 1) {
+          if (!isThere(j, i, (k + tile[4]) % 4)) return;
+        }
+      }
+    }
+  }
+  alert('finished');
+  cur_level_idx++;
+  cur_level = levels[cur_level_idx];
+}
+
+function isThere(x, y, dir) {
+  switch(dir) {
+    case 0: y--; break;
+    case 1: x++; break;
+    case 2: y++; break;
+    case 3: x--; break;
+  }
+  dir = (dir + 2) % 4;
+  if (x < 0 ||
+    y < 0 ||
+    cur_level.tiles.length <= y ||
+    cur_level.tiles[0].length <= x) {
+    return false;
+  }
+  var ret = cur_level.tiles[y][x][(dir - cur_level.tiles[y][x][4] + 4) % 4];
+
+  return ret;
+}
+
+canvas.addEventListener('click', function(e) {
+  console.log(e);
+  var x = Math.floor(e.offsetX / SC - 0.5);
+  var y = Math.floor(e.offsetY / SC - 0.5);
+  x = Math.min(Math.max(x, 0), cur_level.tiles[0].length);
+  y = Math.min(Math.max(y, 0), cur_level.tiles.length);
+  var tile = cur_level.tiles[y][x];
+  if (tile[5]) {
+    tile[4] = tile[5]
+  }
+  tile[5] = tile[4] + 1;
+});
+
+function drawShape(num, rot) {
+  ctx.save();
+  ctx.translate(SC / 2, SC / 2);
+  ctx.rotate(rot);
+  num == 1 && line();
+  num == 2 && curve();
+  num == 3 && triple();
+  num == 4 && single();
+  ctx.restore();
+}
+function single() {
+  ctx.beginPath();
+  ctx.moveTo(-SC / 2, 0);
+  ctx.lineTo(-SC / 5, 0);
+  ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(0, 0, SC / 5, 0, Math.PI * 2);
+  ctx.stroke();
+}
+function line() {
+  ctx.beginPath();
+  ctx.moveTo(-SC / 2, 0);
+  ctx.lineTo(SC / 2, 0);
+  ctx.stroke();
+}
+
+function curve() {
+  ctx.beginPath();
+  ctx.arc(-SC / 2, -SC / 2, SC / 2, 0, Math.PI / 2);
+  ctx.stroke();
+}
+
+
+</script>
+</body>
+</html>
